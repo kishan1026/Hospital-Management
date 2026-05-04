@@ -22,7 +22,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-backend/.env
-backend/node_nodules
-frontend/.env
-frontend/node_nodules
+.env
