@@ -1,51 +1,56 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState } from "react";
 import { doctors } from "../assets/assets";
 
 export const AppContext = createContext();
 
 const AppContextProvider = (props) => {
+  const currencySymbol = "$";
 
-  const currencySymbol = '$';
+  // ✅ Load token from localStorage
+  const [token, setToken] = useState(
+    () => localStorage.getItem("token") || null
+  );
 
-  // ✅ TOKEN (real auth)
-  const [token, setToken] = useState(localStorage.getItem("token") || null);
-
-  // ✅ USER DATA (optional future use)
-  const [user, setUser] = useState(null);
-
-  // 🔥 Fetch user (optional - future use)
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!token) return;
-
-      try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          setUser(data.user);
-        }
-      } catch (error) {
-        console.log(error);
+  // ✅ Load user from localStorage
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem("user");
+  
+      // If no user OR value is literally "undefined" or "null"
+      if (
+        !savedUser ||
+        savedUser === "undefined" ||
+        savedUser === "null"
+      ) {
+        return null;
       }
-    };
+  
+      return JSON.parse(savedUser);
+    } catch (error) {
+      console.log("Invalid user data in localStorage:", error);
+  
+      // Remove corrupted data
+      localStorage.removeItem("user");
+  
+      return null;
+    }
+  });
 
-    fetchUser();
-  }, [token]);
+  // ✅ Login function
+  // Save token + user in localStorage and state
+  const login = (newToken, userData) => {
+    localStorage.setItem("token", newToken);
+    localStorage.setItem("user", JSON.stringify(userData));
 
-  // ✅ LOGIN (store token only)
-  const login = (token) => {
-    localStorage.setItem("token", token);
-    setToken(token);
+    setToken(newToken);
+    setUser(userData);
   };
 
-  // ✅ LOGOUT
+  // ✅ Logout function
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
     setToken(null);
     setUser(null);
   };
@@ -54,8 +59,9 @@ const AppContextProvider = (props) => {
     doctors,
     currencySymbol,
     token,
-    setToken,
     user,
+    setToken,
+    setUser,
     login,
     logout,
   };
